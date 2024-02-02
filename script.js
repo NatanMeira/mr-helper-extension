@@ -10,6 +10,7 @@ function getSubtasksText() {
         const aElement = divElement.getElementsByTagName('a')[0]
         const parentSpan = divElement.querySelector('[data-testid="issue-field-summary.ui.inline-read.link-item--primitive--container"]');
         const text = parentSpan.getElementsByTagName('span')[0].innerText
+        if (text.match(/code review/i)) return
         cardsTexts.push(aElement.innerText + ' ' + text);
       });
     });
@@ -45,7 +46,7 @@ function isModalOpen() {
 }
 document.addEventListener('DOMContentLoaded', async function () {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  chrome.scripting.executeScript({
+  await chrome.scripting.executeScript({
     target: { tabId: tab.id },
     function: isModalOpen,
   }).then((res) => {
@@ -55,11 +56,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('copy').className = 'flex';
   });
 
-  chrome.storage.local.get(['subtasks', 'title'], function (result) {
+  await chrome.storage.local.get(['subtasks', 'title'], function (result) {
     if (!result.title || !result.subtasks) return
-    document.getElementById('alert').className = 'hide';
     document.getElementById('title').value = result.title;
     document.getElementById('content').innerHTML = result.subtasks;
+    document.getElementById('alert').className = 'hide';
     document.getElementById('copy').className = 'hide';
     document.getElementById('mr-data').className = 'show';
   });
@@ -69,7 +70,7 @@ function paste(title, subtasks) {
   const titleEl = document.querySelector('[name="merge_request[title]"]');
   const descriptionEl = document.querySelector('[name="merge_request[description]"]');
   titleEl.value = title;
-  descriptionEl.value = subtasks.replace(/\n/g, '<br>\n') + '<br><br>\n\n' + descriptionEl.value;
+  descriptionEl.value = subtasks.replace(/\n/g, '<br>\n') + '<br>\n' + descriptionEl.value;
 }
 
 document.getElementById('paste').addEventListener('click', async (event) => {
